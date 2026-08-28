@@ -3,6 +3,7 @@ package gobrrr
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"testing"
 )
@@ -68,4 +69,17 @@ func calcError(want, got any) (float64, float64, float64) {
 func printError(label string, want, got any) {
 	total, want, got := calcError(want, got)
 	fmt.Printf("%s: rel err %.12f, want %.12f, got %.12f\n", label, total, want, got)
+}
+
+func randMat(n int, rng *rand.Rand) [][]float64 {
+	m := make([][]float64, n)
+	for i := range m {
+		m[i] = make([]float64, n)
+	}
+	for i := range m {
+		for j := range m[i] {
+			m[i][j] = rng.NormFloat64()
+		}
+	}
+	return m
 }

@@ -55,3 +55,14 @@ func refLog(x, y []float64) {
 		y[i] = math.Log(x[i])
 	}
 }
+
+func refMM(A, B, C [][]float64) {
+	for i := range A {
+		for j := range B[0] {
+			C[i][j] = 0
+			for k := range A[i] {
+				C[i][j] += A[i][k] * B[k][j]
+			}
+		}
+	}
+}
