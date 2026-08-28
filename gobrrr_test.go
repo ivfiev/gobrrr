@@ -29,7 +29,7 @@ func TestDeriveExpCoefs(t *testing.T) {
 		return err / (0.7 / 0.01)
 	}
 	fmt.Printf("Before: %.18f\n", loss())
-	SPSA64(w, loss, 1e-2, 1e-1, 10e5, rng)
+	SPSA64x8(w, loss, 1e-2, 1e-1, 10e5, rng)
 	fmt.Printf("After:  %.18f\n", loss())
 	fmt.Printf(`
 	_c0 := archsimd.BroadcastFloat64x8(%.12f)
@@ -89,7 +89,7 @@ func TestDeriveLogCoefs(t *testing.T) {
 		return err / n
 	}
 	fmt.Printf("Before: %.18f\n", loss())
-	SPSA64(w, loss, 1e-4, 2e-1, 2e6, rng)
+	SPSA64x8(w, loss, 1e-4, 2e-1, 2e6, rng)
 	fmt.Printf("After:  %.18f\n", loss())
 	fmt.Printf(`
 	_c0 := archsimd.BroadcastFloat64x8(%.12f)
@@ -165,54 +165,66 @@ func TestInverseLogExp(t *testing.T) {
 	}
 }
 
-func BenchmarkExp(b *testing.B) {
-	rng := rand.New(rand.NewSource(42))
-	x := make([]float64, 1024)
-	y := make([]float64, len(x))
-	for i := range x {
-		x[i] = rng.NormFloat64()
+func TestMatMul2x2(t *testing.T) {
+	a := [][]float64{
+		{1, 2},
+		{3, 4},
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Exp64x8(x, y)
+	b := [][]float64{
+		{2, 3},
+		{4, 5},
 	}
+	c := [][]float64{{0, 0}, {0, 0}}
+	MM64x8(a, b, c)
+	assertRelEqual(t, []float64{10, 13}, c[0], 1e-15)
+	assertRelEqual(t, []float64{22, 29}, c[1], 1e-15)
 }
 
-func BenchmarkReferenceExp(b *testing.B) {
-	rng := rand.New(rand.NewSource(42))
-	x := make([]float64, 1024)
-	y := make([]float64, len(x))
-	for i := range x {
-		x[i] = rng.NormFloat64()
+func TestMatMul3x3(t *testing.T) {
+	a := [][]float64{
+		{1, 2},
+		{3, 4},
+		{5, 6},
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		refExp(x, y)
+	b := [][]float64{
+		{2, 3, 4},
+		{4, 5, 6},
 	}
+	c := [][]float64{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}
+	MM64x8(a, b, c)
+	assertRelEqual(t, []float64{10, 13, 16}, c[0], 1e-15)
+	assertRelEqual(t, []float64{22, 29, 36}, c[1], 1e-15)
+	assertRelEqual(t, []float64{34, 45, 56}, c[2], 1e-15)
 }
 
-func BenchmarkLog(b *testing.B) {
-	rng := rand.New(rand.NewSource(42))
-	x := make([]float64, 1024)
-	y := make([]float64, len(x))
-	for i := range x {
-		x[i] = 10 + rng.NormFloat64()
+func TestMatMul2x3(t *testing.T) {
+	a := [][]float64{
+		{1, 2},
+		{3, 4},
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Log64x8(x, y)
+	b := [][]float64{
+		{2, 3, 4},
+		{4, 5, 6},
 	}
+	c := [][]float64{{0, 0, 0}, {0, 0, 0}}
+	MM64x8(a, b, c)
+	assertRelEqual(t, []float64{10, 13, 16}, c[0], 1e-15)
+	assertRelEqual(t, []float64{22, 29, 36}, c[1], 1e-15)
 }
 
-func BenchmarkReferenceLog(b *testing.B) {
-	rng := rand.New(rand.NewSource(42))
-	x := make([]float64, 1024)
-	y := make([]float64, len(x))
-	for i := range x {
-		x[i] = 10 + rng.NormFloat64()
+func TestMatMul3x2(t *testing.T) {
+	a := [][]float64{
+		{1, 2},
+		{3, 4},
+		{5, 6},
 	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		refLog(x, y)
+	b := [][]float64{
+		{2, 3},
+		{4, 5},
 	}
+	c := [][]float64{{0, 0}, {0, 0}, {0, 0}}
+	MM64x8(a, b, c)
+	assertRelEqual(t, []float64{10, 13}, c[0], 1e-15)
+	assertRelEqual(t, []float64{22, 29}, c[1], 1e-15)
+	assertRelEqual(t, []float64{34, 45}, c[2], 1e-15)
 }
