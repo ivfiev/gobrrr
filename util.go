@@ -20,7 +20,7 @@ func assertRelEqual(t *testing.T, want, got []float64, eps float64) {
 		if want[i] > eps {
 			err /= want[i]
 		}
-		if err > eps {
+		if err > eps || math.IsNaN(err) {
 			t.Fatalf("%.12f != %.12f\n", got[i], want[i])
 		}
 	}

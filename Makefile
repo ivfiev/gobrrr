@@ -2,11 +2,11 @@
 test:
 	go test
 
-exp-coefs:
-	EXP_COEFS=1 go test
+exp-coefs-spsa:
+	EXP_COEFS_SPSA=1 go test
 
-log-coefs:
-	LOG_COEFS=1 go test
+log-coefs-spsa:
+	LOG_COEFS_SPSA=1 go test
 
 bench:
 	go test -bench=.

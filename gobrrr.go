@@ -11,19 +11,23 @@ func Exp64x8(x, y []float64) {
 	_ln2 := archsimd.BroadcastFloat64x8(math.Log(2))
 	_ln2inv := archsimd.BroadcastFloat64x8(1 / math.Log(2))
 	_1 := archsimd.BroadcastFloat64x8(1.0)
-	_c0 := archsimd.BroadcastFloat64x8(0.999999998859)
-	_c1 := archsimd.BroadcastFloat64x8(0.999999888930)
-	_c2 := archsimd.BroadcastFloat64x8(1.0 / 1.999999607884)
-	_c3 := archsimd.BroadcastFloat64x8(1.0 / 5.999888737874)
-	_c4 := archsimd.BroadcastFloat64x8(1.0 / 24.000502565446)
-	_c5 := archsimd.BroadcastFloat64x8(1.0 / 119.988688273605)
-	_c6 := archsimd.BroadcastFloat64x8(1.0 / 720.087701064694)
+	_c0 := archsimd.BroadcastFloat64x8(0.999999999998)
+	_c1 := archsimd.BroadcastFloat64x8(0.999999999800)
+	_c2 := archsimd.BroadcastFloat64x8(1.0 / 1.999999999282)
+	_c3 := archsimd.BroadcastFloat64x8(1.0 / 5.999999824097)
+	_c4 := archsimd.BroadcastFloat64x8(1.0 / 24.000001074697)
+	_c5 := archsimd.BroadcastFloat64x8(1.0 / 119.999978852380)
+	_c6 := archsimd.BroadcastFloat64x8(1.0 / 720.000203511400)
+	_c7 := archsimd.BroadcastFloat64x8(1.0 / 5039.993924284215)
+	_c8 := archsimd.BroadcastFloat64x8(1.0 / 40320.100167716337)
 	for i := 0; i < len(x); {
 		_xs, di := archsimd.LoadFloat64x8Part(x[i:])
 		_ns := _xs.Mul(_ln2inv).RoundScaled(0)
 		_rs := _xs.Sub(_ns.Mul(_ln2))
 		_fs := _1.Scale(_ns)
-		_ps := _c6
+		_ps := _c8
+		_ps = _ps.MulAdd(_rs, _c7)
+		_ps = _ps.MulAdd(_rs, _c6)
 		_ps = _ps.MulAdd(_rs, _c5)
 		_ps = _ps.MulAdd(_rs, _c4)
 		_ps = _ps.MulAdd(_rs, _c3)
@@ -35,6 +39,8 @@ func Exp64x8(x, y []float64) {
 	}
 }
 
+// precondition - x > 0.
+// undefined for +-inf, nan, < 0
 func Log64x8(x, y []float64) {
 	_2047 := archsimd.BroadcastUint64x8(0x7ff)
 	_1023 := archsimd.BroadcastUint64x8(1023)
@@ -43,15 +49,19 @@ func Log64x8(x, y []float64) {
 	_2f := archsimd.BroadcastFloat64x8(2)
 	_3f := archsimd.BroadcastFloat64x8(3)
 	_ln2 := archsimd.BroadcastFloat64x8(math.Log(2))
-	_c0 := archsimd.BroadcastFloat64x8(0.405465100769)
-	_c1 := archsimd.BroadcastFloat64x8(1.0 / 3.000001231711)
-	_c2 := archsimd.BroadcastFloat64x8(1.0 / -18.000128073858)
-	_c3 := archsimd.BroadcastFloat64x8(1.0 / 80.986272102112)
-	_c4 := archsimd.BroadcastFloat64x8(1.0 / -323.671543626634)
-	_c5 := archsimd.BroadcastFloat64x8(1.0 / 1227.707246284511)
-	_c6 := archsimd.BroadcastFloat64x8(1.0 / -4532.280548307926)
-	_c7 := archsimd.BroadcastFloat64x8(1.0 / 12842.526554538275)
-	_c8 := archsimd.BroadcastFloat64x8(1.0 / -37905.739906840659)
+	_c0 := archsimd.BroadcastFloat64x8(0.405465108127)
+	_c1 := archsimd.BroadcastFloat64x8(1.0 / 2.999999998685)
+	_c2 := archsimd.BroadcastFloat64x8(1.0 / -17.999999566983)
+	_c3 := archsimd.BroadcastFloat64x8(1.0 / 81.000017133326)
+	_c4 := archsimd.BroadcastFloat64x8(1.0 / -324.001516746617)
+	_c5 := archsimd.BroadcastFloat64x8(1.0 / 1214.985408024274)
+	_c6 := archsimd.BroadcastFloat64x8(1.0 / -4373.014778870280)
+	_c7 := archsimd.BroadcastFloat64x8(1.0 / 15308.053204810001)
+	_c8 := archsimd.BroadcastFloat64x8(1.0 / -52664.587485614167)
+	_c9 := archsimd.BroadcastFloat64x8(1.0 / 179469.109081751376)
+	_c10 := archsimd.BroadcastFloat64x8(1.0 / -590696.068581895437)
+	_c11 := archsimd.BroadcastFloat64x8(1.0 / 1595750.984968878794)
+	_c12 := archsimd.BroadcastFloat64x8(1.0 / -4976464.841514403000)
 	_mantissa := _1.ShiftAllLeft(52).Sub(_1)
 	_exponent0 := _1023.ShiftAllLeft(52)
 	for i := 0; i < len(x); {
@@ -60,7 +70,11 @@ func Log64x8(x, y []float64) {
 		_es := _bs.ShiftAllRight(52).And(_2047).ConvertToInt64().Sub(_1023i).ConvertToFloat64()
 		_ms := _bs.And(_mantissa).Or(_exponent0).BitsToFloat64()
 		_ms = _ms.Mul(_2f).Sub(_3f)
-		_lnm := _c8
+		_lnm := _c12
+		_lnm = _lnm.MulAdd(_ms, _c11)
+		_lnm = _lnm.MulAdd(_ms, _c10)
+		_lnm = _lnm.MulAdd(_ms, _c9)
+		_lnm = _lnm.MulAdd(_ms, _c8)
 		_lnm = _lnm.MulAdd(_ms, _c7)
 		_lnm = _lnm.MulAdd(_ms, _c6)
 		_lnm = _lnm.MulAdd(_ms, _c5)
@@ -216,6 +230,18 @@ func Softmax64x8(x, y []float64) {
 	Exp64x8(y, y)
 	sum := Sum64x8(y)
 	Div64x8(sum, y, y)
+}
+
+func GD64x8(w []float64, grad func([]float64), lr float64, steps int) {
+	g := make([]float64, len(w))
+	for range steps {
+		clear(g)
+		grad(g)
+		// TODO vectorise
+		for i := range g {
+			w[i] -= lr * g[i]
+		}
+	}
 }
 
 func LayerNorm64x8(x, y []float64) {
