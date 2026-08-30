@@ -254,8 +254,7 @@ func NewRNG(seed uint64) *RNG {
 	s := seed
 	for i := range len(rng.state) {
 		for j := range len(rng.state[i]) {
-			s = s ^ (s << 7) ^ (s << 29) ^ (s << 59)
-			s++
+			s = splitmix64(&s)
 			rng.state[i][j] = s
 		}
 	}
@@ -291,3 +290,12 @@ func (r *RNG) Float64x8(y []float64) {
 		i += di
 	}
 }
+
+// // N(0, 1)
+// func (r *RNG) Normal64x8(y []float64) {
+// 	r.Float64x8(y)
+// 	for i := 0; i < len(y); {
+// 		_y, di := archsimd.LoadFloat64x8Part(y[i:])
+// 		i += di
+// 	}
+// }

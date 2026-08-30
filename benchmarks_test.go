@@ -141,13 +141,28 @@ func BenchmarkRNGFloat64x8(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		rng.Float64x8(f)
-		for i := range f {
-			println(f[i])
-		}
 	}
 }
 
 func BenchmarkReferenceRNGFloat64x8(b *testing.B) {
+	rng := rand.New(rand.NewSource(42))
+	f := make([]float64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		refRNGFloat64x8(f, rng)
+	}
+}
+
+func BenchmarkRNGNormal64x8(b *testing.B) {
+	rng := NewRNG(42)
+	f := make([]float64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rng.Normal64x8(f)
+	}
+}
+
+func BenchmarkReferenceRNGNormal64x8(b *testing.B) {
 	rng := rand.New(rand.NewSource(42))
 	f := make([]float64, 1024)
 	b.ResetTimer()

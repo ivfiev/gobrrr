@@ -78,3 +78,9 @@ func refRNGFloat64x8(y []float64, rng *rand.Rand) {
 		y[i] = rng.Float64()
 	}
 }
+
+func refRNGNormal64x8(y []float64, rng *rand.Rand) {
+	for i := range y {
+		y[i] = rng.NormFloat64()
+	}
+}
