@@ -66,3 +66,15 @@ func refMM(A, B, C [][]float64) {
 		}
 	}
 }
+
+func refRNGUint64x8(y []uint64, rng *rand.Rand) {
+	for i := range y {
+		y[i] = rng.Uint64()
+	}
+}
+
+func refRNGFloat64x8(y []float64, rng *rand.Rand) {
+	for i := range y {
+		y[i] = rng.Float64()
+	}
+}

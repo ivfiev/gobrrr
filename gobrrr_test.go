@@ -77,7 +77,7 @@ func TestDeriveLogCoefsSPSA(t *testing.T) {
 	loss := func() float64 {
 		err := 0.0
 		n := 0.0
-		for x := 1.0; x <= 2.0; x += 0.05 {
+		for x := 1.0; x <= 2.0; x += 0.02 {
 			rel := (math.Log(x) - log1p(x))
 			err += rel * rel
 			n++

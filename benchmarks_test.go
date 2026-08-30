@@ -116,3 +116,42 @@ func BenchmarkReferenceSPSA(b *testing.B) {
 		}, 0.001, 0.001, 1000)
 	}
 }
+
+func BenchmarkRNGUint64x8(b *testing.B) {
+	rng := NewRNG(42)
+	n := make([]uint64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rng.Uint64x8(n)
+	}
+}
+
+func BenchmarkReferenceRNGUint64x8(b *testing.B) {
+	rng := rand.New(rand.NewSource(42))
+	n := make([]uint64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		refRNGUint64x8(n, rng)
+	}
+}
+
+func BenchmarkRNGFloat64x8(b *testing.B) {
+	rng := NewRNG(42)
+	f := make([]float64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rng.Float64x8(f)
+		for i := range f {
+			println(f[i])
+		}
+	}
+}
+
+func BenchmarkReferenceRNGFloat64x8(b *testing.B) {
+	rng := rand.New(rand.NewSource(42))
+	f := make([]float64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		refRNGFloat64x8(f, rng)
+	}
+}

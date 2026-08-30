@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"simd/archsimd"
+	"unsafe"
 )
 
 func Exp64x8(x, y []float64) {
@@ -49,19 +50,19 @@ func Log64x8(x, y []float64) {
 	_2f := archsimd.BroadcastFloat64x8(2)
 	_3f := archsimd.BroadcastFloat64x8(3)
 	_ln2 := archsimd.BroadcastFloat64x8(math.Log(2))
-	_c0 := archsimd.BroadcastFloat64x8(0.405465108127)
-	_c1 := archsimd.BroadcastFloat64x8(1.0 / 2.999999998685)
-	_c2 := archsimd.BroadcastFloat64x8(1.0 / -17.999999566983)
-	_c3 := archsimd.BroadcastFloat64x8(1.0 / 81.000017133326)
-	_c4 := archsimd.BroadcastFloat64x8(1.0 / -324.001516746617)
-	_c5 := archsimd.BroadcastFloat64x8(1.0 / 1214.985408024274)
-	_c6 := archsimd.BroadcastFloat64x8(1.0 / -4373.014778870280)
-	_c7 := archsimd.BroadcastFloat64x8(1.0 / 15308.053204810001)
-	_c8 := archsimd.BroadcastFloat64x8(1.0 / -52664.587485614167)
-	_c9 := archsimd.BroadcastFloat64x8(1.0 / 179469.109081751376)
-	_c10 := archsimd.BroadcastFloat64x8(1.0 / -590696.068581895437)
-	_c11 := archsimd.BroadcastFloat64x8(1.0 / 1595750.984968878794)
-	_c12 := archsimd.BroadcastFloat64x8(1.0 / -4976464.841514403000)
+	_c0 := archsimd.BroadcastFloat64x8(0.405465108128)
+	_c1 := archsimd.BroadcastFloat64x8(1.0 / 2.999999997918)
+	_c2 := archsimd.BroadcastFloat64x8(1.0 / -17.999999582358)
+	_c3 := archsimd.BroadcastFloat64x8(1.0 / 81.000022985641)
+	_c4 := archsimd.BroadcastFloat64x8(1.0 / -324.001365346364)
+	_c5 := archsimd.BroadcastFloat64x8(1.0 / 1214.986519467250)
+	_c6 := archsimd.BroadcastFloat64x8(1.0 / -4373.154074496582)
+	_c7 := archsimd.BroadcastFloat64x8(1.0 / 15303.769877723937)
+	_c8 := archsimd.BroadcastFloat64x8(1.0 / -52638.080495141054)
+	_c9 := archsimd.BroadcastFloat64x8(1.0 / 180733.819684225717)
+	_c10 := archsimd.BroadcastFloat64x8(1.0 / -589632.234938221634)
+	_c11 := archsimd.BroadcastFloat64x8(1.0 / 1538067.470050582895)
+	_c12 := archsimd.BroadcastFloat64x8(1.0 / -5182973.540498261340)
 	_mantissa := _1.ShiftAllLeft(52).Sub(_1)
 	_exponent0 := _1023.ShiftAllLeft(52)
 	for i := 0; i < len(x); {
@@ -244,6 +245,49 @@ func GD64x8(w []float64, grad func([]float64), lr float64, steps int) {
 	}
 }
 
-func LayerNorm64x8(x, y []float64) {
-	// TODO
+type RNG struct {
+	state [4][8]uint64
+}
+
+func NewRNG(seed uint64) *RNG {
+	rng := &RNG{}
+	s := seed
+	for i := range len(rng.state) {
+		for j := range len(rng.state[i]) {
+			s = s ^ (s << 7) ^ (s << 29) ^ (s << 59)
+			s++
+			rng.state[i][j] = s
+		}
+	}
+	return rng
+}
+
+func (r *RNG) Uint64x8(y []uint64) {
+	_0 := archsimd.LoadUint64x8Array(&r.state[0])
+	_1 := archsimd.LoadUint64x8Array(&r.state[1])
+	_2 := archsimd.LoadUint64x8Array(&r.state[2])
+	_3 := archsimd.LoadUint64x8Array(&r.state[3])
+	for i := 0; i < len(y); {
+		_t := _1.ShiftAllLeft(17)
+		_2 = _2.Xor(_0)
+		_3 = _3.Xor(_1)
+		_1 = _1.Xor(_2)
+		_0 = _0.Xor(_3)
+		_2 = _2.Xor(_t)
+		_3 = _3.ShiftAllLeft(45).Or(_3.ShiftAllRight(19))
+		_result := _0.Add(_3)
+		_result = _result.ShiftAllLeft(23).Or(_result.ShiftAllRight(41)).Add(_0)
+		i += _result.StorePart(y[i:])
+	}
+}
+
+func (r *RNG) Float64x8(y []float64) {
+	u := unsafe.Slice((*uint64)(unsafe.Pointer(unsafe.SliceData(y))), len(y))
+	r.Uint64x8(u)
+	_r := archsimd.BroadcastFloat64x8(-53.0)
+	for i := 0; i < len(y); {
+		_u, di := archsimd.LoadUint64x8Part(u[i:])
+		_u.ShiftAllRight(11).ConvertToFloat64().Scale(_r).StorePart(y[i:])
+		i += di
+	}
 }

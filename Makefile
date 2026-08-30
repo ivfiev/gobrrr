@@ -22,3 +22,6 @@ bench-log:
 
 bench-mm:
 	go test -bench=MM -benchmem
+
+bench-rng:
+	go test -bench=RNG
