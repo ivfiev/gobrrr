@@ -293,7 +293,8 @@ func (r *RNG) Float64x8(y []float64) {
 
 // N(0, 1), slow tho
 func (r *RNG) Normal64x8(y []float64) {
-	var buf [8]float64 // experiment with sizes
+	var buf [1024]float64
+	b := len(buf)
 	r.Float64x8(y)
 	_1 := archsimd.BroadcastFloat64x8(1.0)
 	_half := archsimd.BroadcastFloat64x8(0.5)
@@ -308,13 +309,24 @@ func (r *RNG) Normal64x8(y []float64) {
 	_c8 := archsimd.BroadcastFloat64x8(-0.023471662378356)
 	_c9 := archsimd.BroadcastFloat64x8(-0.039563549387715)
 	for i := 0; i < len(y); {
+		if b >= len(buf) {
+			c := min(len(buf), len(y)-i)
+			for j := 0; j < c; {
+				_t, dj := archsimd.LoadFloat64x8Part(y[i+j:])
+				_t = _t.Max(_1.Sub(_t))
+				_t = _t.Scale(_1).Sub(_1)
+				_t = _1.Sub(_t)
+				_t.StorePart(buf[j:])
+				j += dj
+			}
+			Log64x8(buf[:c], buf[:c])
+			b = 0
+		}
 		_u, di := archsimd.LoadFloat64x8Part(y[i:])
+		_t, _ := archsimd.LoadFloat64x8Part(buf[b:])
 		_signs := _u.Less(_half)
 		_u = _u.Max(_1.Sub(_u))
 		_u = _u.Scale(_1).Sub(_1)
-		_1.Sub(_u).StoreArray(&buf)
-		Log64x8(buf[:], buf[:])
-		_t := archsimd.LoadFloat64x8Array(&buf)
 		_t = _t.Neg().Scale(_1).Sqrt()
 		_pt := _c3
 		_pt = _pt.MulAdd(_t, _c2)
@@ -332,5 +344,6 @@ func (r *RNG) Normal64x8(y []float64) {
 		_sum = _sum.IfElse(_signs, _sum.Neg())
 		_sum.StorePart(y[i:])
 		i += di
+		b += di
 	}
 }
