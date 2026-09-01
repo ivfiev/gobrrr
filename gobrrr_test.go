@@ -322,18 +322,39 @@ func TestDeriveICDFcoefsSPSA(t *testing.T) {
 	println()
 }
 
+func TestRNGUniform64x8(t *testing.T) {
+}
+
 func TestRNGNormal64x8(t *testing.T) {
-	println("SCALAR:")
-	rng := rand.New(rand.NewSource(42))
-	y := make([]float64, 128)
-	refRNGNormal64x8_ICDF(y, rng)
-	for i := range y {
-		println(y[i])
-	}
+	const n = 100000
+	y := make([]float64, n)
 	RNG := NewRNG(42)
-	println("SIMD:")
 	RNG.Normal64x8(y)
+	// refRNGNormal64x8(y, rand.New(rand.NewSource(42)))
+	// refRNGNormal64x8_ICDF(y, rand.New(rand.NewSource(42)))
+	// refRNGNormal64x8_ICDF_2(y, NewRNG(42))
+	u := Sum64x8(y) / n
+	o2 := Dot64x8(y, y) / n
+	d := map[int]float64{}
 	for i := range y {
-		println(y[i])
+		d[int(math.Abs(y[i]))] += 1.0 / n
+	}
+	if math.Abs(u) > 1e-4 {
+		t.Fatalf("Mean: %.9f\n", u)
+	}
+	if math.Abs(1.0-o2) > 1e-2 {
+		t.Fatalf("Var: %.9f\n", o2)
+	}
+	if math.Abs(d[0]-0.68) > 1e-2 {
+		t.Fatalf("0o: %.9f\n", d[0])
+	}
+	if math.Abs(d[1]-0.27) > 1e-2 {
+		t.Fatalf("1o: %.9f\n", d[1])
+	}
+	if math.Abs(d[2]-0.04) > 1e-2 {
+		t.Fatalf("2o: %.9f\n", d[2])
+	}
+	if math.Abs(d[3]-0.002) > 1e-3 {
+		t.Fatalf("3o: %.9f\n", d[3])
 	}
 }

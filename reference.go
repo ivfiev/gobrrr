@@ -101,3 +101,21 @@ func refRNGNormal64x8_ICDF(y []float64, rng *rand.Rand) {
 		y[i] = n
 	}
 }
+
+func refRNGNormal64x8_ICDF_2(y []float64, rng *RNG) {
+	rng.Float64x8(y)
+	for i := range y {
+		u := y[i]
+		sign := 1.0
+		if u < 0.5 {
+			sign = -1.0
+			u = 1.0 - u
+		}
+		u = 2.0*u - 1.0
+		t := math.Sqrt(-2.0 * math.Log(1.0-u))
+		n := -0.003443158384481*t + 0.491835497331457*t*t + -0.079719124779027*t*t*t + 0.004967610936717*t*t*t*t +
+			0.332324532778573*u + -0.096792568759106*u*u + -0.013285523520417*u*u*u + 0.076496666884755*u*u*u*u + -0.023471662297990*u*t + -0.039563548571559*u*u*t*t
+		n *= sign
+		y[i] = n
+	}
+}

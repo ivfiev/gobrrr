@@ -118,6 +118,24 @@ func MM64x8(A, B, C [][]float64) {
 	}
 }
 
+func Dot64x8(u, v []float64) float64 {
+	if len(u) != len(v) {
+		panic("len(u) != len(v)")
+	}
+	_acc := archsimd.BroadcastFloat64x8(0)
+	for i := 0; i < len(u); {
+		_u, di := archsimd.LoadFloat64x8Part(u[i:])
+		_v, _ := archsimd.LoadFloat64x8Part(v[i:])
+		_acc = _u.MulAdd(_v, _acc)
+		i += di
+	}
+	_hi4, _lo4 := _acc.GetHi(), _acc.GetLo()
+	_hi4 = _hi4.Add(_lo4)
+	_hi2, _lo2 := _hi4.GetHi(), _hi4.GetLo()
+	_hi2 = _hi2.Add(_lo2)
+	return _hi2.GetElem(0) + _hi2.GetElem(1)
+}
+
 func Rademacher64x8(x []float64, rng *rand.Rand) {
 	_plus := archsimd.BroadcastFloat64x8(1)
 	_minus := archsimd.BroadcastFloat64x8(-1)
@@ -338,9 +356,11 @@ func (r *RNG) Normal64x8(y []float64) {
 		_pu = _pu.MulAdd(_u, _c5)
 		_pu = _pu.MulAdd(_u, _c4)
 		_pu = _pu.Mul(_u)
-		_ut := _c8.Mul(_u.Mul(_t))
-		_ut = _c9.Mul(_ut.Add(_ut.Scale(_1)))
-		_sum := _pt.Add(_pu).Add(_ut)
+		_ut := _u.Mul(_t)
+		_put := _c9
+		_put = _put.MulAdd(_ut, _c8)
+		_put = _put.Mul(_ut)
+		_sum := _pt.Add(_pu).Add(_put)
 		_sum = _sum.IfElse(_signs, _sum.Neg())
 		_sum.StorePart(y[i:])
 		i += di
