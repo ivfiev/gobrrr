@@ -291,11 +291,46 @@ func (r *RNG) Float64x8(y []float64) {
 	}
 }
 
-// // N(0, 1)
-// func (r *RNG) Normal64x8(y []float64) {
-// 	r.Float64x8(y)
-// 	for i := 0; i < len(y); {
-// 		_y, di := archsimd.LoadFloat64x8Part(y[i:])
-// 		i += di
-// 	}
-// }
+// N(0, 1), slow tho
+func (r *RNG) Normal64x8(y []float64) {
+	var buf [8]float64 // experiment with sizes
+	r.Float64x8(y)
+	_1 := archsimd.BroadcastFloat64x8(1.0)
+	_half := archsimd.BroadcastFloat64x8(0.5)
+	_c0 := archsimd.BroadcastFloat64x8(-0.003443158047592)
+	_c1 := archsimd.BroadcastFloat64x8(0.491835497915927)
+	_c2 := archsimd.BroadcastFloat64x8(-0.079719122352743)
+	_c3 := archsimd.BroadcastFloat64x8(0.004967610355521)
+	_c4 := archsimd.BroadcastFloat64x8(0.332324534604180)
+	_c5 := archsimd.BroadcastFloat64x8(-0.096792568205689)
+	_c6 := archsimd.BroadcastFloat64x8(-0.013285522274385)
+	_c7 := archsimd.BroadcastFloat64x8(0.076496669953061)
+	_c8 := archsimd.BroadcastFloat64x8(-0.023471662378356)
+	_c9 := archsimd.BroadcastFloat64x8(-0.039563549387715)
+	for i := 0; i < len(y); {
+		_u, di := archsimd.LoadFloat64x8Part(y[i:])
+		_signs := _u.Less(_half)
+		_u = _u.Max(_1.Sub(_u))
+		_u = _u.Scale(_1).Sub(_1)
+		_1.Sub(_u).StoreArray(&buf)
+		Log64x8(buf[:], buf[:])
+		_t := archsimd.LoadFloat64x8Array(&buf)
+		_t = _t.Neg().Scale(_1).Sqrt()
+		_pt := _c3
+		_pt = _pt.MulAdd(_t, _c2)
+		_pt = _pt.MulAdd(_t, _c1)
+		_pt = _pt.MulAdd(_t, _c0)
+		_pt = _pt.Mul(_t)
+		_pu := _c7
+		_pu = _pu.MulAdd(_u, _c6)
+		_pu = _pu.MulAdd(_u, _c5)
+		_pu = _pu.MulAdd(_u, _c4)
+		_pu = _pu.Mul(_u)
+		_ut := _c8.Mul(_u.Mul(_t))
+		_ut = _c9.Mul(_ut.Add(_ut.Scale(_1)))
+		_sum := _pt.Add(_pu).Add(_ut)
+		_sum = _sum.IfElse(_signs, _sum.Neg())
+		_sum.StorePart(y[i:])
+		i += di
+	}
+}

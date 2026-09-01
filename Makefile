@@ -8,6 +8,9 @@ exp-coefs-spsa:
 log-coefs-spsa:
 	LOG_COEFS_SPSA=1 go test
 
+icdf-coefs-spsa:
+	ICDF_COEFS_SPSA=1 go test
+
 bench:
 	go test -bench=.
 

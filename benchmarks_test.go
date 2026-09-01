@@ -170,3 +170,12 @@ func BenchmarkReferenceRNGNormal64x8(b *testing.B) {
 		refRNGFloat64x8(f, rng)
 	}
 }
+
+func BenchmarkReferenceRNGNormal64x8_ICDF(b *testing.B) {
+	rng := rand.New(rand.NewSource(42))
+	f := make([]float64, 1024)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		refRNGNormal64x8_ICDF(f, rng)
+	}
+}

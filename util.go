@@ -91,3 +91,11 @@ func splitmix64(x *uint64) uint64 {
 	z = (z ^ (z >> 27)) * 0x94d049bb133111eb
 	return z ^ (z >> 31)
 }
+
+func fact(n float64) float64 {
+	prod := 1.0
+	for i := 1.0; i <= n; i++ {
+		prod *= i
+	}
+	return prod
+}
